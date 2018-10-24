@@ -32,13 +32,7 @@ namespace HometownZoo.Models.Tests
             // Set up Mock database and mock animal table
 
             // create a Mock of Animals
-            Mock<DbSet<Animal>> mockAnimals = new Mock<DbSet<Animal>>();
-            mockAnimals.As<IQueryable<Animal>>()
-                    .Setup(m => m.Provider).Returns(animals.Provider);
-            mockAnimals.As<IQueryable<Animal>>()
-                    .Setup(m => m.Expression).Returns(animals.Expression);
-            mockAnimals.As<IQueryable<Animal>>()
-                    .Setup(m => m.GetEnumerator()).Returns(animals.GetEnumerator());
+            Mock<DbSet<Animal>> mockAnimals = GetAnimalMockDbSet();
 
             // create mock database
             // .Object returns the Object within the generic type
@@ -49,10 +43,30 @@ namespace HometownZoo.Models.Tests
             // Act
             IEnumerable<Animal> allAnimals = AnimalService.GetAnimals(mockDb.Object);
 
-            // Assert
+            // Assert all animals are returned
             Assert.AreEqual(2, allAnimals.Count());
+
+            // Assert animals are sorted by name (ascending)
+            Assert.AreEqual("Bat", allAnimals.ElementAt(0).Name);
+            Assert.AreEqual("Zebra", allAnimals.ElementAt(1).Name);
         }
 
-        // c
+        private Mock<DbSet<Animal>> GetAnimalMockDbSet()
+        {
+            Mock<DbSet<Animal>> mockAnimals = new Mock<DbSet<Animal>>();
+            mockAnimals.As<IQueryable<Animal>>()
+                    .Setup(m => m.Provider)
+                    .Returns(animals.Provider);
+
+            mockAnimals.As<IQueryable<Animal>>()
+                    .Setup(m => m.Expression)
+                    .Returns(animals.Expression);
+
+            mockAnimals.As<IQueryable<Animal>>()
+                    .Setup(m => m.GetEnumerator())
+                    .Returns(animals.GetEnumerator());
+
+            return mockAnimals;
+        }
     }
 }
