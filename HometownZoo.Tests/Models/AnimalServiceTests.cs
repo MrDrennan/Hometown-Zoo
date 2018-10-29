@@ -35,10 +35,7 @@ namespace HometownZoo.Models.Tests
             Mock<DbSet<Animal>> mockAnimals = GetAnimalMockDbSet();
 
             // create mock database
-            // .Object returns the Object within the generic type
-            var mockDb = new Mock<ApplicationDbContext>();
-            mockDb.Setup(db => db.Animals)
-                    .Returns(mockAnimals.Object);
+            var mockDb = GetMockDb(mockAnimals);
 
             // Act
             IEnumerable<Animal> allAnimals = AnimalService.GetAnimals(mockDb.Object);
@@ -49,6 +46,47 @@ namespace HometownZoo.Models.Tests
             // Assert animals are sorted by name (ascending)
             Assert.AreEqual("Bat", allAnimals.ElementAt(0).Name);
             Assert.AreEqual("Zebra", allAnimals.ElementAt(1).Name);
+        }
+
+        [TestMethod]
+        public void AddAnimal_NewAnimalShouldCallAddAndSaveChanges()
+        {
+            // Arrange
+            Mock<DbSet<Animal>> mockAnimals = GetAnimalMockDbSet();
+            Mock<ApplicationDbContext> mockDb = GetMockDb(mockAnimals);
+
+            Animal a = new Animal() { Name = "Elephant" };
+
+            // Act
+            AnimalService.AddAnimal(a, mockDb.Object);
+
+            // Assert
+            // Times.Once ensures method only gets called once
+            // m stands for method
+            mockAnimals.Verify(m => m.Add(a), Times.Once);
+            mockDb.Verify(m => m.SaveChanges(), Times.Once);
+        }
+
+        private static Mock<ApplicationDbContext> GetMockDb(Mock<DbSet<Animal>> mockAnimals)
+        {
+            // .Object returns the Object within the generic type
+            var mockDb = new Mock<ApplicationDbContext>();
+            mockDb.Setup(db => db.Animals)
+                    .Returns(mockAnimals.Object);
+            return mockDb;
+        }
+
+        [TestMethod]
+        public void AddAnimal_NullAnimal_ShouldThrowNullArgumentException()
+        {
+            Animal a = null;
+
+            Mock<DbSet<Animal>> mockAnimals = GetAnimalMockDbSet();
+            Mock<ApplicationDbContext> mockDb = GetMockDb(mockAnimals);
+
+            //Assert => Act
+            // () represents an empty function
+            Assert.ThrowsException<ArgumentNullException>(() => AnimalService.AddAnimal(a, mockDb.Object));
         }
 
         private Mock<DbSet<Animal>> GetAnimalMockDbSet()
